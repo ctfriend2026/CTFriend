@@ -1,0 +1,37 @@
+---
+tags:
+  - Hashing
+---
+Run by the National Drug Intelligence Center, part of the U.S.
+Department of Justice.
+
+**HashKeeper** is a database application of value primarily to those
+conducting forensic examinations of computers on a somewhat regular
+basis.
+
+## Overview
+
+The application uses the [MD5](md5.md) file signature algorithm
+to establish unique numeric identifiers (hash values) for known files
+and compares those known hash values against the hash values of Computer
+file\|files on a seized computer system. Where those values match, the
+examiner can say, with statistical certainty, that the corresponding
+files on the seized system have been authenticated and therefore do not
+need to be examined.
+
+## Origins
+
+Created by the National Drug Intelligence Center (NDIC)—an agency of the
+United States Department of Justice—in 1996, it was the first source for
+hash values of "known to be good" files.
+
+## Availability
+
+HashKeeper is available, free-of-charge, to law enforcement, military
+and other government agencies throughout the world. It is available to
+the public by sending a [Freedom of Information Act](https://www.justice.gov/archive/ndic/ndic-moved.html)
+request to NDIC.
+
+## External Links
+
+* [Official NDIC website](https://www.justice.gov/archive/ndic/ndic-moved.html)

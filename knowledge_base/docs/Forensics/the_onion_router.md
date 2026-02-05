@@ -1,0 +1,61 @@
+---
+tags:
+  -  Anti-Forensics
+  -  Network Forensics
+---
+**Tor** (**The Onion Router**) is an implementation of second-generation
+onion routing.
+
+## Overview
+
+Tor is a distributed censorship-resistant network designed to anonymize
+TCP-based applications.
+
+## Attacks
+
+**Timing attacks**
+
+Tor fails when the attacker can correlate timing patterns on both ends
+of the communications channel.
+
+**Misconfigured software**
+
+- DNS leaks
+
+Some applications do name resolution directly (bypassing Tor proxy). In
+this case lookup requests leak significant information (e.g. website
+being visited).
+
+- Web browsers
+  - Enabled scripts: Java and Flash applets may leak real IP address
+    (see Metasploit Decloaking Engine);
+  - Enabled cookies: web server can identify clients using unique
+    cookies.
+
+<!-- -->
+
+- Direct connections in Instant Messaging also leak real IP address
+
+**TLS attacks**
+
+Various deviations of system time can be detected in TLS traffic (e.g.
+HTTPS traffic). Attacker can modify system time of the target computer
+(or group of them) via NTP and easily trace TLS connections from
+anonymous network.
+
+**Eavesdropping by exit nodes**
+
+Tor doesn't encrypt traffic between an exit node and the target server,
+so exit nodes are able to capture all unencrypted traffic. Malicious
+exit nodes can perform man-in-the-middle attacks on encrypted protocols.
+
+## Hidden services
+
+Location hidden services are also vulnerable to timing correlation
+attack.
+
+## External Links
+
+* [Official website](https://www.torproject.org/)
+* [Wikipedia: Tor (network)](https://en.wikipedia.org/wiki/Tor_(network))
+* [Low-Cost Traffic Analysis of Tor (University of Cambridge)](https://murdoch.is/papers/oakland05torta.pdf)

@@ -1,0 +1,151 @@
+---
+tags:
+  - Articles that need to be expanded
+  - Windows
+---
+SuperFetch is a performance enhancement introduced in
+[Microsoft](microsoft.md) [Windows Vista](windows.md) to
+reduce the time necessary to launch applications. SuperFetch works with
+the memory manager service in Windows to analyze memory usage patterns
+over time to determine the optimal memory content for a given user for a
+date or time of day. This differs from the
+[Prefetch](prefetch.md) technique used in Microsoft Windows XP,
+which preloads data into memory without analyzing usage patterns.
+
+From [Windows ReadyBoost](https://download.microsoft.com/download/3/0/2/3027d574-c433-412a-a8b6-5e0a75d5b237/perfaccel.docx):
+
+SuperFetch prioritizes the following kinds of pages to remain in memory:
+
+- Pages of applications that are used most frequently overall.
+- Pages of applications that are commonly used when resuming:
+  - After extensive hibernation (for example, first thing in the
+    morning).
+  - After shorter periods of sleep or hibernation (for example, after
+    lunch).
+
+Prefetched pages are added to the system’s standby page list, which has
+been reorganized and redesigned to retain useful data in memory over
+longer periods of time.
+
+If SuperFetch detects that the system drive is a fast SSD (as measured
+by Windows Experience Index Disk score), then SuperFetch turns off
+[ReadyBoot](readyboot.md), [ReadyBoost](readyboost.md),
+and the SuperFetch service itself.
+
+To calculate the Windows Experience Index Disk score run:
+
+    winsat formal
+
+## Components
+
+### Robust performance
+
+Robust performance (or robustness) is a component of SuperFetch to watch
+for specific file I/O access that might harm system performance by
+populating the standby lists with unneeded data.
+
+## Scenarios
+
+SuperFetch distinguishes between different scenarios to accurately
+measure performance.
+
+### Cold scenario
+
+In a cold scenario, the test applications are not already in memory when
+the test begins. Cold scenarios measure performance either after a state
+transition, such as boot or resume from hibernation, or after another
+application claims most of the available memory, such as after launching
+and quitting a game.
+
+### Warm scenario
+
+In a warm scenario, some or all the scenario contents are in memory
+before measurement. This usually means that the test has run at least
+once during this logon session.
+
+### Performance scenarios
+
+Performance scenarios defined by the Windows Performance Recorder (WPR):
+
+- General: Records general performance while the computer is running.
+- On/Off - Boot: Records performance while the computer is booting.
+- On/Off – Fast Startup: Records performance during a fast startup.
+- On/Off - Shutdown: Records performance while shutting the computer
+  down.
+- On/Off - RebootCycle: Records performance during the entire cycle
+  while the computer is rebooting.
+- On/Off - Standby/Resume: Records performance when the computer is
+  placed on standby and then resumed.
+- On/Off - Hibernate/Resume: Records performance when the computer is
+  placed in hibernation and then resumed.
+
+Where "On/Off" likely refers to a cold scenario.
+
+## Configuration
+
+Because SuperFetch appears to leave a system with no available memory, some
+users turn it off to create the appearance of having more free memory. The
+feature can be configured by changing the [Registry](windows_registry.md) value:
+
+    Key: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters
+    Value: EnableSuperfetch
+
+A value of zero disables SuperFetch, one enables it for booting only,
+two for applications, and three for both applications and boot. This
+setting can also be changed using the Services console, `services.msc`
+[1](https://tiredblogger.wordpress.com/2007/03/27/superfetch-not-so-super-for-gaming/).
+
+## File Formats
+
+Data for SuperFetch is gathered by the
+`%SystemRoot%\System32\Sysmain.dll`, part of the Service Host process,
+`%SystemRoot%\System32\Svchost.exe`, and stored in a series of files in
+the `%SystemRoot%\Prefetch` directory
+[2](https://learn.microsoft.com/en-us/).
+These files appear to start with the prefix `Ag` and have a `.db`
+extension. Note that there are likely more SuperFetch database files
+named differently, presumably all using the .db extension.
+
+The format of the SuperFetch database files is not fully known, there is
+available unofficial partial specification
+[3](http://blog.rewolf.pl/blog/?p=214) and open source (GPL) dumper for
+.db files [4](https://github.com/rwfpl/rewolf-superfetch-dumper). For
+more information see [SuperFetch
+Format](windows_superfetch_format.md).
+
+The SuperFetch feature is seeded with some basic usage patterns when the
+operating system is installed
+[5](https://learn.microsoft.com/en-us/shows/).
+
+The SuperFetch service is managed by the File Information FS MiniFilter
+service. It appears that most of the SuperFetch database files are
+updated (written) when the service is shut down. AgAppLaunch.db is also
+written when the service starts.
+
+## See Also
+
+* [Prefetch](prefetch.md)
+* [ReadyBoost](readyboost.md)
+* [ReadyBoot](readyboot.md)
+* [SuperFetch Format](windows_superfetch_format.md)
+* [Windows](windows.md)
+
+## External Links
+
+* [Inside the Windows Vista Kernel: Part 2](https://learn.microsoft.com/en-us/previous-versions/technet-magazine/cc162480(v=msdn.10)),
+  by [Mark Russinovich](mark_russinovich.md), March 2007
+* [Performance Testing Guide for Windows](https://download.microsoft.com/download/7/E/7/7E7662CF-CBEA-470B-A97E-CE7CE0D98DC2/Win7Perf.docx),
+  by [Microsoft](microsoft.md), August 18, 2009 
+* [Performance Scenarios](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-8.1-and-8/hh162965(v=win.10)),
+  by [Microsoft](microsoft.md), October 20, 2013
+* [Wikipedia: Windows Vista I/O technologies - SuperFetch](https://en.wikipedia.org/wiki/Windows_Vista_I/O_technologies#SuperFetch)
+* [Channel 9 Interview with Michael Fortin of Microsoft on SuperFetch](https://learn.microsoft.com/en-us/shows/)
+* [Microsoft Predicts The Future With Vista's SuperFetch](https://www.informationweek.com)
+  from Information Week
+
+## Tools
+
+### Open Source
+
+* [rewolf-superfetch-dumper](https://github.com/rwfpl/rewolf-superfetch-dumper)
+* [CrowdResponse](https://www.crowdstrike.com/resources/community-tools/crowdresponse/)
