@@ -99,6 +99,9 @@ The only required prerequsite is Docker and Docker compose. For installation of 
 ### Installation
 
 1. Clone the repo
+    ```bash
+    git clone git@github.com:TribeCTF/TribeCTF-AI.git
+    ```
 
 2. Setup environment variables
     ```bash
