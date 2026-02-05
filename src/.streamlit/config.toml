@@ -1,0 +1,23 @@
+[server]
+headless = true
+address = "0.0.0.0"
+port = 8501
+
+runOnSave = false
+
+maxUploadSize = 200
+
+enableStaticServing = true
+
+[logger]
+level = "info"
+
+[client]
+toolbarMode = "minimal"
+
+[cache]
+persist = true
+ttl = 3600
+
+[browser]
+gatherUsageStats = false
