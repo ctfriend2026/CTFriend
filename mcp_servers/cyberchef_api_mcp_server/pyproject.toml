@@ -1,0 +1,25 @@
+[project]
+name = "cyberchef-api-mcp-server"
+version = "0.1.0"
+description = "MCP server that has the ability to interact with the CyberChef server RESTful API"
+readme = "README.md"
+requires-python = ">=3.11"
+keywords = ["mcp", "llm", "cyberchef", "cyber", "web", "fetch"]
+license = { text = "MIT"}
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp>=1.6.0",
+]
+
+[project.scripts]
+cyberchef-api-mcp-server = "cyberchef_api_mcp_server.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cyberchef_api_mcp_server"]
+
+[tool.uv]
+dev-dependencies = ["pytest>=8.3.5"]
