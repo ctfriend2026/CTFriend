@@ -1,0 +1,143 @@
+networks:
+  ctfriend_net:
+    external: false
+
+volumes:
+  postgres_data:
+  grafana_data:
+  prometheus_data:
+
+services:
+  ctfriend:
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    container_name: ctfriend
+    environment:
+      - MCP_CYBERCHEF_URL=http://cyberchef_api:8001
+      - MCP_RAG_URL=http://rag_server:8002
+      - STREAMLIT_SERVER_PORT=8501
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+psycopg2://postgres:${POSTGRES_PASSWORD}@db:5432/metrics
+      - TOKEN_SECRET_KEY=${TOKEN_SECRET_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    ports:
+      - "8501:8501"
+    depends_on:
+      - cyberchef_api
+      - db
+      - rag_server
+    networks:
+      - ctfriend_net
+    env_file:
+      - .env
+
+  # --- RAG Knowledge Base Server ---
+  rag_server:
+    build:
+      context: ./mcp_servers/rag_mcp_server
+      dockerfile: Dockerfile
+    container_name: rag_server
+    volumes:
+      - ./knowledge_base:/app/knowledge_base
+    expose:
+      - "8002"   # only visible to other containers on ctfriend_net
+    environment:
+      - PORT=8002
+      - HOST=0.0.0.0
+    networks:
+      - ctfriend_net
+
+  # Node.js CyberChef backend (built from repo)
+  cyberchef_backend:
+    build:
+      context: ./mcp_servers/cyberchef_backend
+      dockerfile: Dockerfile
+    container_name: cyberchef_backend
+    expose:
+      - "3001"
+    networks:
+      - ctfriend_net
+
+  # MCP wrapper around CyberChef backend
+  cyberchef_api:
+    build:
+      context: ./mcp_servers/cyberchef_api_mcp_server
+      dockerfile: Dockerfile
+    container_name: cyberchef_api
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CYBERCHEF_BACKEND_URL=http://cyberchef_backend:3001
+    expose:
+      - "8001"
+    ports:
+      - "8001:8001"
+    depends_on:
+      - cyberchef_backend
+    networks:
+      - ctfriend_net
+
+  # --- Postgres database for metrics ---
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: metrics
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ctfriend_net
+    env_file:
+      - .env
+
+  # --- Monitoring Stack ---
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: prometheus
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-admin-api'
+    ports:
+      - "9090:9090"
+    networks:
+      - ctfriend_net
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    restart: always
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - ctfriend_net
+
+  # --- Grafana for monitoring ---
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - ctfriend_net
+

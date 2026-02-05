@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'cadvisor'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['cadvisor:8080']
+    relabel_configs:
+      - source_labels: [name]
+        regex: '^/:(.*)$'
+        action: drop
+      - source_labels: [name]
+        regex: '/docker/(.*)'
+        target_label: container_id
+        action: replace
+      - source_labels: [name]
+        target_label: container_name
+        regex: '/(.*)'
+        replacement: '${1}'
