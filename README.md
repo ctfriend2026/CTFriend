@@ -102,7 +102,8 @@ The only required prerequsite is Docker and Docker compose. For installation of 
     ```bash
     cp .env.example .env
 
-    # replace POSTGRES_PASSWORD and TOKEN_SECRET_KEY
+    # replace POSTGRES_PASSWORD, TOKEN_SECRET_KEY, and ANTHROPIC_API_KEY
+    # NOTE: A personal ANTHROPIC KEY is needed for testing
     ```
 
 3. Install Docker containers
