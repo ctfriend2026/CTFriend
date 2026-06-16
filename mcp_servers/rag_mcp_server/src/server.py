@@ -6,8 +6,10 @@ from langchain_community.document_loaders import (
     DirectoryLoader,
     PyPDFLoader,
     UnstructuredMarkdownLoader,
+    TextLoader,
 )
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+#from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.vectorstores import VectorStoreRetriever
@@ -63,7 +65,7 @@ def setup_retriever() -> VectorStoreRetriever:
         md_loader = DirectoryLoader(
             KNOWLEDGE_BASE_DIR,
             glob="**/*.md",
-            loader_cls=UnstructuredMarkdownLoader,
+            loader_cls=TextLoader,
             use_multithreading=True,
             show_progress=True,
         )

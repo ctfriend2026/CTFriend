@@ -7,7 +7,7 @@ name = "rag-mcp-server"
 version = "0.1.0"
 description = "A standalone MCP server for Retrieval-Augmented Generation using local embeddings."
 authors = [
-  { name="Admin", email="ctfriend@local" },
+    { name = "Admin", email = "ctfriend@local.local" }
 ]
 readme = "README.md"
 requires-python = ">=3.11"
@@ -18,14 +18,16 @@ classifiers = [
 ]
 
 dependencies = [
-    "langchain",
-    "langchain-community",
+    "langchain>=0.3,<0.4",
+    "langchain-community>=0.3,<0.4",
+    "langchain-core>=0.3,<0.4",
     "langchain-huggingface",
+    "langchain-text-splitters",
     "fastmcp",
     "faiss-cpu",
     "pypdf",
     "unstructured",
     "python-magic",
     "markdown",
-    "sentence-transformers"
+    "sentence-transformers",
 ]

@@ -7,17 +7,18 @@ name = "CTFriend"
 version = "0.1.0"
 description = "Streamlit app for a single LLM agent with MCP tools"
 authors = [
-    { name = "Admin", email = "ctfriend@local" }
+    { name = "Admin", email = "ctfriend@local.local" }
 ]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "streamlit",
-    "langchain",
-    "langchain-community",
+    "langchain==0.3.26",
+    "langchain-community==0.3.26",
+    "langchain-core>=0.3.66,<0.4",
+    "langchain-mcp-adapters==0.0.8",
     "langchain-anthropic",
     "langchain-google-genai",
-    "langchain-mcp-adapters",
     "openai",
     "ollama",
     "watchdog",
