@@ -91,11 +91,21 @@ The only required prerequsite is Docker and Docker compose. For installation of 
 
 * <https://docs.docker.com/compose/install/>
 
+### System Requirements
+
+Minimum system requirements:
+
+- A system capable of running Docker compose (Windows/Linux/Mac).
+
+- At least 4 GB of Ram
+
+- At least 15GB of storage
+
 ### Installation
 
 1. Clone the repo
     ```bash
-    git clone git@github.com:TribeCTF/TribeCTF-AI.git
+    git clone git@github.com:ctfriend2026/CTFriend.git
     ```
 
 2. Setup environment variables
@@ -104,6 +114,7 @@ The only required prerequsite is Docker and Docker compose. For installation of 
 
     # replace POSTGRES_PASSWORD, TOKEN_SECRET_KEY, and ANTHROPIC_API_KEY
     # NOTE: A personal ANTHROPIC KEY is needed for testing
+    # NOTE: POSTGRES_PASSWORD and TOKEN_SECRET_KEY only need to be changed in live deployment. For testing, the defaults are fine. 
     ```
 
 3. Install Docker containers
@@ -125,8 +136,12 @@ Login into the ctfriend container and run the following commands:
 ```bash
 cd app
 
+# use cd src/app if cd app doesn't work
+
 python3 token_manager.py whitelist [email]
 ```
+
+**NOTE: Any email here can do. It is not tied to anything. For testing purposes feel free to use (test@test.com)**
 
 ## Grafana Setup
 
