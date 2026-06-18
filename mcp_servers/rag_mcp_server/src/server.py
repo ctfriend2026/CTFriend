@@ -126,7 +126,7 @@ def main() -> None:
     mcp.run(
         transport="sse",
         host="0.0.0.0",
-        port="8002"
+        port=8002
     )
 
 if __name__ == "__main__":

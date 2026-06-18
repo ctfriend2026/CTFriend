@@ -16,7 +16,7 @@ dependencies = [
     "langchain==0.3.26",
     "langchain-community==0.3.26",
     "langchain-core>=0.3.66,<0.4",
-    "langchain-mcp-adapters==0.0.8",
+    "langchain-mcp-adapters>=0.1.0,<0.2",
     "langchain-anthropic",
     "langchain-google-genai",
     "openai",
