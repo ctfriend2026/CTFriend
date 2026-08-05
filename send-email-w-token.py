@@ -1,3 +1,9 @@
+"""Email CTFriend login tokens to a list of users.
+
+Reads an email list, provisions or looks up each token through the running
+ctfriend container, and sends the token with SMTP settings from the environment.
+"""
+
 import sys
 import time
 import os
@@ -6,7 +12,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 
-# load environment variables
+# Load SMTP credentials and server settings from .env or the process environment.
 load_dotenv()
 
 if len(sys.argv) < 2:
@@ -14,14 +20,15 @@ if len(sys.argv) < 2:
     sys.exit(1)
     
 def get_token_cmd(email):
+    # Reuse the token manager inside the running app container.
     return f"docker exec ctfriend python3 app/token_manager.py whitelist {email} | awk -F': ' '/token is:/ {{print $2}}'"
     
 
 email_file = sys.argv[1]
 email_file = email_file.strip()
 
-## SMTP related configs
 def create_token_email_message(sender_email, receiver_email, token):
+    # Build a simple plaintext email with the user's login token.
     message = MIMEMultipart("alternative")
     message["Subject"] = "CTFriend Login Token"
     message["From"] = sender_email
@@ -35,7 +42,7 @@ def create_token_email_message(sender_email, receiver_email, token):
     return message.as_string()
 
 def send_email(sender_email, receiver_email, message):
-    
+    # Send through SMTP with STARTTLS.
     port = 587
 
     username = os.getenv("SMTP_USER")
@@ -72,6 +79,7 @@ with open(email_file, 'r') as file:
             continue
         
         token_cmd = get_token_cmd(email)
+        # Run token generation one user at a time so each email gets its own token.
         token = os.popen(token_cmd).read()
         
         print(f"Got token: {token} for user {email}")

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""Tests for CyberChef operation metadata retrieval.
+
+Verifies that categories and operation lists can be fetched from upstream
+CyberChef metadata and filtered by category.
+"""
 
 
 from mcp_servers.cyberchef_api_mcp_server.src.cyberchefoperations import CyberChefOperations

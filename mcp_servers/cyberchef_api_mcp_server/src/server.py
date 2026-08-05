@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""CyberChef FastMCP adapter for CTFriend.
+
+Forwards MCP tool calls to the CyberChef backend service and normalizes
+CyberChef responses into JSON payloads that the chat agent can consume.
+"""
 
 import os
 import httpx
@@ -39,6 +44,7 @@ def create_api_request(endpoint: str, request_data: dict) -> Any | dict[str, str
     :param request_data: data to send with the POST request
     :return: dict object of response data
     """
+    # Normalize slashes so callers can pass endpoints with or without a leading slash.
     api_url = f"{cyberchef_backend_url.rstrip('/')}/{endpoint.lstrip('/')}"
     request_headers = {
         "Accept": "application/json",
@@ -74,13 +80,14 @@ def get_cyberchef_operation_by_category(category: str) -> list:
 @mcp.tool()
 def bake_recipe(input_data: str, recipe: List[CyberChefRecipeOperation]) -> dict:
     """Bake a recipe on the given input data"""
+    # Convert Pydantic recipe operations into the JSON shape expected by CyberChef.
     request_data = {
         "input": input_data,
         "recipe": [op.model_dump() for op in recipe]
     }
     response_data = create_api_request(endpoint="bake", request_data=request_data)
 
-    # If the response has a byte array, decode to string
+    # Convert CyberChef byte arrays to strings so LLM callers receive readable output.
     if response_data.get("type") == "byteArray":
         response_data["value"] = bytes(response_data["value"]).decode()
         response_data["type"] = "string"
@@ -90,12 +97,14 @@ def bake_recipe(input_data: str, recipe: List[CyberChefRecipeOperation]) -> dict
 @mcp.tool()
 def batch_bake_recipe(batch_input_data: List[str], recipe: List[CyberChefRecipeOperation]) -> dict:
     """Bake a recipe on a batch of input data"""
+    # Batch mode applies the same recipe to each input item.
     request_data = {
         "input": batch_input_data,
         "recipe": [op.model_dump() for op in recipe]
     }
     response_data = create_api_request(endpoint="batch/bake", request_data=request_data)
 
+    # Normalize each item because batch responses mirror single bake responses.
     for response in response_data:
         if response.get("type") == "byteArray":
             response["value"] = bytes(response["value"]).decode()
@@ -112,6 +121,7 @@ def perform_magic_operation(
     crib_str: str = ""
 ) -> dict:
     """Run CyberChef's magic operation"""
+    # Magic asks CyberChef to infer likely decoding/transformation chains.
     request_data = {
         "input": input_data,
         "args": {

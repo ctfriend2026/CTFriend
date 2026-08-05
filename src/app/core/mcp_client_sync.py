@@ -1,3 +1,9 @@
+"""Synchronous adapter for LangChain MCP tools.
+
+LangChain agents in this app call tools synchronously, while MCP tool adapters
+are async. These wrappers bridge that difference and cache discovered tools.
+"""
+
 import asyncio
 import logging
 from typing import Dict
@@ -27,6 +33,7 @@ class SyncToolWrapper(StructuredTool):
         Adds robust error handling so errors don't crash the chat.
         """
         try:
+            # Bridge the async MCP tool call into LangChain's sync StructuredTool API.
             return asyncio.run(main=self._tool.ainvoke(input=kwargs))
         except Exception as e:
             logger.exception(msg=f"Error running tool {self.name}: {e}")
@@ -45,6 +52,7 @@ class MultiServerMCPClientSync:
     def get_tools(self) -> list[SyncToolWrapper]:
         """Return a list of StructuredTools, all wrapped as sync tools."""
         if self._tools is None:
+            # Tool discovery can hit remote MCP servers, so cache the wrapped list.
             async_tools = asyncio.run(main=self._client.get_tools())
             self._tools = [SyncToolWrapper(tool=t) for t in async_tools]
         return self._tools

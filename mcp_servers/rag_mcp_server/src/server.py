@@ -1,3 +1,9 @@
+"""RAG MCP server for CTFriend.
+
+Indexes the mounted knowledge_base directory into a local vector store and
+exposes a FastMCP tool that the chat agent can call for CTF reference context.
+"""
+
 import os
 import logging
 from typing import List
@@ -53,6 +59,7 @@ def setup_retriever() -> VectorStoreRetriever:
     try:
         docs = []
         
+        # Load PDFs and Markdown separately so each file type gets the right parser.
         pdf_loader = DirectoryLoader(
             KNOWLEDGE_BASE_DIR,
             glob="**/*.pdf",
@@ -80,6 +87,7 @@ def setup_retriever() -> VectorStoreRetriever:
         return None
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    # Overlap keeps nearby context together when a relevant answer spans chunks.
     splits = text_splitter.split_documents(docs)
     logger.info(f"Split documents into {len(splits)} chunks.")
 
@@ -88,6 +96,7 @@ def setup_retriever() -> VectorStoreRetriever:
     logger.info("Embedding model loaded.")
 
     logger.info("Creating vector store...")
+    # FAISS keeps retrieval local inside the MCP server container.
     vectorstore = FAISS.from_documents(documents=splits, embedding=embeddings)
     logger.info("Vector store created successfully.")
     
@@ -110,12 +119,14 @@ def query_knowledge_base(query: str) -> str:
     if not results:
         return "No relevant information found in the knowledge base."
         
+    # Separate chunks clearly so the calling agent can compare sources.
     formatted_results = "\n\n---\n\n".join([doc.page_content for doc in results])
     return f"Found the following information in the knowledge base:\n\n{formatted_results}"
 
 def main() -> None:
     global retriever
     logger.info("Starting RAG MCP Server setup...")
+    # Build the retriever once at startup; tool calls reuse the global retriever.
     retriever = setup_retriever()
 
     if retriever:

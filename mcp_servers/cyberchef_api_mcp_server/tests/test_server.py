@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""Integration-style tests for CyberChef MCP tool functions.
+
+These tests exercise recipe baking, batch baking, and Magic response formatting
+against the configured CyberChef backend.
+"""
 
 
 

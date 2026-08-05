@@ -1,3 +1,9 @@
+"""Command-line token administration for CTFriend.
+
+Generates deterministic login tokens, whitelists or reactivates users, and
+lists active accounts for deployments that use token-gated access.
+"""
+
 import argparse
 import os
 import hmac
@@ -11,6 +17,7 @@ SECRET_KEY = os.environ.get("TOKEN_SECRET_KEY", "a-secure-default-secret-for-dev
 
 def add_is_active_column() -> None:
     """Adds the is_active column to the users table if it doesn't exist."""
+    # Lightweight compatibility step for databases created before this column existed.
     engine = init_db.__globals__["engine"]
     inspector = inspect(subject=engine)
     columns = [c["name"] for c in inspector.get_columns("users")]
@@ -25,6 +32,7 @@ def add_is_active_column() -> None:
 
 def add_email_column() -> None:
     """Adds the email column to the users table if it doesn't exist."""
+    # Lightweight compatibility step for older user tables that stored only tokens.
     engine = init_db.__globals__["engine"]
     inspector = inspect(subject=engine)
     columns = [c["name"] for c in inspector.get_columns("users")]
@@ -42,6 +50,7 @@ def add_email_column() -> None:
 
 def generate_token(email: str) -> str:
     """Generates a deterministic HMAC-SHA256 token from an email address."""
+    # Deterministic tokens let admins regenerate a user's token without storing plaintext.
     return hmac.new(
         key=SECRET_KEY.encode(), msg=email.lower().encode(), digestmod=hashlib.sha256
     ).hexdigest()
@@ -49,6 +58,7 @@ def generate_token(email: str) -> str:
 
 def whitelist_email(email: str) -> None:
     """Creates a new user with the given email and a generated token."""
+    # Normalize before hashing so email casing cannot create duplicate users.
     normalized_email = email.lower()
     token = generate_token(email=normalized_email)
 
@@ -56,16 +66,19 @@ def whitelist_email(email: str) -> None:
         user = session.query(User).filter_by(email=normalized_email).first()
         if user:
             if user.is_active:
+                # Existing active users keep their original deterministic token.
                 print(
                     f"User with email '{normalized_email}' is already whitelisted and active."
                 )
                 print(f"Their token is: {user.username}")
             else:
+                # Reactivation keeps historical conversations attached to the same user.
                 user.is_active = True
                 session.commit()
                 print(f"User with email '{normalized_email}' has been re-activated.")
                 print(f"Their token is: {user.username}")
         else:
+            # New users are stored with the generated token in the username field.
             new_user = User(email=normalized_email, username=token, is_active=True)
             session.add(new_user)
             session.commit()

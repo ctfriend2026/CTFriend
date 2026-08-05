@@ -35,7 +35,7 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
+      <a href="#about-the-project">About CTFriend</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
       </ul>
@@ -55,18 +55,20 @@
         <li><a href="#setup-dashboards">Setup Dashboards</a>
       </ul>
     </li>
+    <li><a href="#setup-dashboards">Start CTFriend</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
   </ol>
 </details>
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+## About CTFriend
 
 [![CTFriend Screen Shot][product-screenshot]](http://128.239.26.203:8501/)
 
 CTFriend is an agentic framework that leverages MCP servers to provide an
-external chat-based server to aid CTF particpants. Additionally, CTFriend
-provides logging to gain insights into human-AI interaction.
+external chat-based server to aid CTF participants. Importantly, CTFriend
+is not intended to operate as an automatic CTF solver, but rather as an AI assistant, 
+supporting participants in challenge solving by providing access to LLMs and the domain knowledge base. Additionally, CTFriend provides logging to gain insights into human-AI interaction.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -87,7 +89,7 @@ Setting up CTFriend, setup has been wrapped into Docker containers controlled wi
 
 ### Prerequisites
 
-The only required prerequsite is Docker and Docker compose. For installation of Docker compose, follow this tutorial from Docker.
+The only required prerequisite is Docker and Docker Compose. For installation of Docker Compose, follow this tutorial from Docker.
 
 * <https://docs.docker.com/compose/install/>
 
@@ -110,12 +112,15 @@ Minimum system requirements:
 
 2. Setup environment variables
     ```bash
+    cd CTFriend
+
     cp .env.example .env
 
     # replace POSTGRES_PASSWORD, TOKEN_SECRET_KEY, and ANTHROPIC_API_KEY
-    # NOTE: A personal ANTHROPIC KEY is needed for testing
-    # NOTE: POSTGRES_PASSWORD and TOKEN_SECRET_KEY only need to be changed in live deployment. For testing, the defaults are fine. 
+    nano . env
     ```
+**NOTE: POSTGRES_PASSWORD and TOKEN_SECRET_KEY only need to be changed in live deployment. For testing, the defaults are fine.**
+
 
 3. Install Docker containers
 
@@ -131,12 +136,19 @@ Minimum system requirements:
 
 CTFriend works on whitelisting tokens, where each user has their own individual token to ID them and their chats within the system. To create this token, use the following instructions.
 
-Login into the ctfriend container and run the following commands:
+Login into the ctfriend container. The image opens interactive shells in the app
+source directory:
+
+create a new terminal window, and run:
+
+```bash
+docker exec -it ctfriend bash
+```
+
+Then run:
 
 ```bash
 cd app
-
-# use cd src/app if cd app doesn't work
 
 python3 token_manager.py whitelist [email]
 ```
@@ -147,7 +159,7 @@ python3 token_manager.py whitelist [email]
 
 Configure Grafana:
 
-Open your web browser and go to http://\<hosted-ip>:3000.
+Open your web browser and go to http://localhost:3000.
 
 Log in with the:
 
@@ -190,9 +202,9 @@ Use the following connection details:
 
 * Database: metrics
 
-* User: \<username>
+* User: postgres
 
-* Password: \<password>
+* Password: `change-me-to-a-secure-password` or the `password` you set in Installation part
 
 * TLS/SSL Mode: disable
 
@@ -213,13 +225,36 @@ Go to "Dashboards" -> "New" -> "Import".
 
 ![Dashboard Import][dashboard-import]
 
-Upload the grafana-system-dashboard.json file. Select the "Prometheus" data source when prompted.
+Upload the `system_monitoring_dashboard.json` file. Select the "Prometheus" data source when prompted.
 
-Repeat the process for the grafana-chat-dashboard.json file, selecting the "PostgreSQL" data source.
+Repeat the process for the `chat_data_dashboard.json` file, selecting the "PostgreSQL" data source.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Backups
+
+## Start CTFriend
+Go to http://localhost:8501/ctfriend.
+
+Input your specific login token generated above.
+
+Select Anthropic as provider and `claude-opus-4-1-20250805` as model.
+
+Now CTfriend is ready.
+
+
+<!-- ROADMAP -->
+## Roadmap
+
+* [x] UI Framework setup
+* [x] API Key support
+* [x] Multi-LLM Support
+  * [x] Gemini
+  * [x] Claude
+* [x] MCP Support
+  * [x] CyberChef
+  * [x] RAG Knowledge Base
+
+## Backups (Optional)
 ```bash
 # view/manage cron jobs
 crontab -l
@@ -230,19 +265,6 @@ crontab -e
 # job for backing up CTFriend
 */5 * * * * "/home/ctfadmin/CTFriend/backup.sh" >> "/home/ctfadmin/CTFriend/crontab.out" 2>&1
 ```
-
-<!-- ROADMAP -->
-## Roadmap
-
-* [x] UI Framework setup
-* [x] API Key support
-* [x] Multi-LLM Support
-  * [x] Gemini
-  * [x] OpenAI
-  * [x] Ollama
-* [x] MCP Support
-  * [x] CyberChef
-  * [x] RAG Knowledge Base
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

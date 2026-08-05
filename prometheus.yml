@@ -1,3 +1,5 @@
+# Prometheus scrape configuration for CTFriend.
+# Add scrape jobs here when exporting service metrics.
 global:
   scrape_interval: 15s
 

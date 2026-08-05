@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""CyberChef operation metadata helper.
+
+Fetches upstream CyberChef category and operation listings for MCP resources
+that help users and agents choose valid CyberChef operations.
+"""
 
 import httpx
 import logging
@@ -22,7 +27,7 @@ class CyberChefOperations:
     def get_all_data(self) -> dict:
         """Get all categories and operations data from the Cyber Chef GitHub project"""
         try:
-            # Get JSON file from GitHub repo
+            # Fetch the canonical operation/category registry from upstream CyberChef.
             response = httpx.get(url=self.ops_url, headers=self.request_headers)
             response.raise_for_status()
             response_dict = response.json()
@@ -33,10 +38,10 @@ class CyberChefOperations:
 
     def get_all_categories(self) -> list:
         """Get a list of all categories that CyberChef groups the operations by"""
-        # Get all the data
+        # Start from the full upstream category document.
         response_dict = self.get_all_data()
 
-        # Parse response
+        # Extract only the category names for concise MCP resource output.
         cyberchef_categories = []
         for category in response_dict:
             cyberchef_categories.append(category["name"])
@@ -45,10 +50,10 @@ class CyberChefOperations:
 
     def get_all_operations(self) -> list:
         """Get a list of all operations Cyber Chef can perform"""
-        # Get all the data
+        # Start from the full upstream category document.
         response_dict = self.get_all_data()
 
-        # Parse response
+        # Flatten operations across all categories.
         cyberchef_operations = []
         for category in response_dict:
             cyberchef_operations.extend(category["ops"])
@@ -62,10 +67,10 @@ class CyberChefOperations:
         :param category: operations belonging to this category
         :return:
         """
-        # Get all the data
+        # Start from the full upstream category document.
         response_dict = self.get_all_data()
 
-        # Parse response
+        # Match category names case-insensitively for friendlier resource calls.
         operations = []
         for category_obj in response_dict:
             if category_obj["name"].lower() == category.lower():

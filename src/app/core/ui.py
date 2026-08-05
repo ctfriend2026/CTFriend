@@ -1,3 +1,9 @@
+"""Streamlit UI components for CTFriend.
+
+This file owns the sidebar controls, token validation, conversation selection,
+message rendering, and the rerun loop that hands user prompts to the app layer.
+"""
+
 import streamlit as st
 import os
 from typing import Any, List, Dict, Callable
@@ -29,6 +35,7 @@ class ChatUI:
         token = st.session_state.user_token
         st.session_state.token_is_valid = is_valid_token(token)
         if not st.session_state.token_is_valid:
+            # Clear stale state immediately when the user enters an invalid token.
             st.session_state.messages = [{"role": "assistant", "content": "Ask me anything."}]
             st.session_state.conversation_id = None
 
@@ -40,6 +47,7 @@ class ChatUI:
         st.session_state.messages = messages or [{"role": "assistant", "content": "How can I help you?"}]
         history_key = f"{token}:{conversation_id}"
         history = ChatMessageHistory()
+        # Rebuild LangChain memory from persisted DB messages before the next turn.
         for msg in st.session_state.messages:
             role, content = msg.get("role", "assistant"), msg.get("content", "")
             if role == "user":
@@ -58,6 +66,7 @@ class ChatUI:
             if st.session_state.token_is_valid:
                 st.subheader("⚙️ Model Configuration")
                 def on_provider_change():
+                    # Reset to the first valid model whenever the provider changes.
                     st.session_state.selected_model = self.providers[st.session_state.selected_provider][0]
                 st.selectbox("Select Provider", list(self.providers.keys()), key="selected_provider", on_change=on_provider_change)
                 st.selectbox("Select Model", self.providers.get(st.session_state.selected_provider, []), key="selected_model")
@@ -69,6 +78,7 @@ class ChatUI:
                 def handle_new_chat():
                     new_conv_id = create_new_conversation(st.session_state.user_token)
                     if new_conv_id:
+                        # Persist an empty conversation before resetting the visible chat.
                         st.session_state.conversation_id = new_conv_id
                         st.session_state.messages = [{"role": "assistant", "content": "How can I help you?"}]
                         st.rerun()
@@ -78,6 +88,7 @@ class ChatUI:
                     local_tz = get_localzone()
                     options = {str(c.id): f"Chat from {c.started_at.astimezone(local_tz).strftime('%b %d, %H:%M')}" for c in conversations}
                     if st.session_state.conversation_id is None:
+                        # On login, default to the newest existing conversation.
                         st.session_state.conversation_id = str(conversations[0].id)
                         self._load_and_prime_history(st.session_state.conversation_id)
                     selected_conv_id = st.selectbox("Load a past chat:", options.keys(), format_func=lambda x: options[x])
@@ -96,6 +107,7 @@ class ChatUI:
         
         if prompt := st.chat_input(placeholder, disabled=is_disabled):
             st.session_state.messages.append({"role": "user", "content": prompt})
+            # Rerun so the user's message appears before the slower agent call begins.
             st.rerun()
 
         if st.session_state.messages and st.session_state.messages[-1].get("role") == "user" and st.session_state.token_is_valid:

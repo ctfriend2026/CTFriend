@@ -1,3 +1,9 @@
+"""Streamlit entrypoint for the CTFriend chat application.
+
+This module wires together the UI, LLM provider selection, MCP tools, chat
+memory, and database logging for the main user-facing app.
+"""
+
 import os
 import streamlit as st
 from typing import Any, Dict, List, Optional
@@ -40,6 +46,7 @@ def init_agent(tools: List[Any]) -> AgentExecutor:
     model = st.session_state.selected_model
     user_api_key = st.session_state.api_key
 
+    # Build the provider-specific chat model from the current Streamlit state.
     if provider == "Gemini":
         llm = ChatGoogleGenerativeAI(model=model, google_api_key=user_api_key)
     elif provider == "Anthropic":
@@ -55,25 +62,30 @@ def init_agent(tools: List[Any]) -> AgentExecutor:
         ("human", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ])
+    # The tool-calling agent can invoke MCP-backed tools while preserving chat history.
     agent = create_tool_calling_agent(llm, tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
     
+    # Cache the executor so Streamlit reruns do not rebuild it unless the model changes.
     st.session_state.agent_executor = agent_executor
     st.session_state.model_for_llm = model
     return agent_executor
 
 def get_client_ip() -> str | None:
     try:
+        # Prefer Streamlit's internal session metadata when available.
         from streamlit.web.server.server import Server
         session_info = Server.get_current()._get_session_info(st.runtime.get_instance()._session_id)
         return session_info.client.ip if session_info else None
     except Exception:
         try:
+            # Fallback for deployments that pass proxy headers through query params.
             return st.query_params.get("X-Forwarded-For") or st.query_params.get("X-Real-IP")
         except Exception:
             return None
 
 def get_session_history(session_id: str) -> ChatMessageHistory:
+    # LangChain calls this with the token:conversation key used below.
     if session_id not in st.session_state.message_store:
         st.session_state.message_store[session_id] = ChatMessageHistory()
     return st.session_state.message_store[session_id]
@@ -87,6 +99,7 @@ def parse_agent_output(agent_output: Dict[str, Any]) -> Dict[str, Any]:
     output = agent_output.get("output")
 
     if isinstance(output, list):
+        # Anthropic can return content blocks; flatten them before storing history.
         text_content = "\n".join(
             block.get("text", "") for block in output if isinstance(block, dict)
         )
@@ -108,11 +121,13 @@ def chat_callback(prompt: str, tools: List[Any]) -> str:
         agent_executor = st.session_state.agent_executor
     
     conversation_id = st.session_state.get("conversation_id")
+    # Persist the user prompt before the agent runs so every attempt is logged.
     persistent_conv_id = log_message(
         token=st.session_state.user_token, conversation_id=conversation_id,
         role="user", content=prompt, source_ip=get_client_ip(),
     )
     st.session_state.conversation_id = persistent_conv_id
+    # Scope in-memory history by token and conversation to avoid mixing chats.
     history_key = f"{st.session_state.user_token}:{persistent_conv_id}"
 
     agent_with_parser = agent_executor | RunnableLambda(parse_agent_output)
@@ -142,6 +157,7 @@ def chat_callback(prompt: str, tools: List[Any]) -> str:
 
     answer = response.get("output", "")
     
+    # Persist the assistant response after successful agent execution.
     log_message(
         token=st.session_state.user_token, conversation_id=persistent_conv_id,
         role=f"assistant ({st.session_state.selected_model})", content=answer, source_ip="server",
@@ -151,6 +167,7 @@ def chat_callback(prompt: str, tools: List[Any]) -> str:
 def main():
     st.set_page_config(page_title="CTFriend", page_icon="💬", layout="wide")
     init_db()
+    # Initialize all Streamlit session keys that are shared between UI and callbacks.
     st.session_state.setdefault("api_key", "")
     st.session_state.setdefault("selected_provider", list(AVAILABLE_PROVIDERS.keys())[0])
     st.session_state.setdefault("selected_model", AVAILABLE_PROVIDERS["Gemini"][0])
@@ -161,6 +178,7 @@ def main():
     tools = []
     if st.session_state.use_mcp:
         try:
+            # FastMCP servers expose Server-Sent Events endpoints under /sse.
             server_config = {name: {"url": f"{url}/sse", "transport": "sse"} for name, url in MCP_SERVER_URLS.items()}
             mcp_client = MultiServerMCPClientSync(server_config)
             tools = mcp_client.get_tools()

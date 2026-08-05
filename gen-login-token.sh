@@ -1,25 +1,27 @@
 #!/bin/bash
+# Bulk token-generation helper for CTFriend.
+# Reads email-list.txt, whitelists each email, and writes tokens to email-token-list.txt.
 
 in_file="email-list.txt"
 out_file="email-token-list.txt"
 
+# Start with a fresh output file for this run.
 rm email-token-list.txt 2> /dev/null
 
-# read emails from email-list.txt
+# Read emails from email-list.txt.
 while IFS= read -r email || [[ -n "$email" ]]; do
-    # skip empty lines
+    # Skip empty lines.
     [[ -z "$email" ]] && continue  
 
+    # Trim surrounding whitespace before passing the email into the container.
     email=$(echo "$email" | xargs)
 
-    # add each email to the whitelist (within ctfriend)
-    # parse the token from the output
+    # Add each email to the whitelist inside ctfriend and parse the token.
     token=$(docker exec ctfriend python3 app/token_manager.py whitelist \
         $email | awk -F': ' '/token is:/ {print $2}' )
 
     echo $email " " $token
 
-    # save to file email-token-list.txt
+    # Save the email/token pair to email-token-list.txt.
     printf "%-25s %-64s\n" "$email" "$token" >> "$out_file"
 done < "$in_file" 
-

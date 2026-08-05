@@ -1,3 +1,9 @@
+"""Database models and persistence helpers for CTFriend.
+
+Defines users, conversations, messages, feedback, and small query helpers used
+by the Streamlit app and token-management CLI.
+"""
+
 from typing import Optional, List, Dict, Any
 import uuid
 import os
@@ -58,6 +64,7 @@ class Message(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 
+# The database URL is injected by docker-compose so the app can connect to Postgres.
 # DATABASE_URL = "postgresql+psycopg2://postgres:postgres@db:5432/metrics"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -120,6 +127,7 @@ def log_message(
         conversation: Optional[Conversation] = None
         if conversation_id:
             try:
+                # Reuse a valid persisted conversation when the UI sends one back.
                 conv_uuid = uuid.UUID(conversation_id)
                 conversation = (
                     session.query(Conversation).filter_by(id=conv_uuid).first()
@@ -128,6 +136,7 @@ def log_message(
                 pass
 
         if not conversation:
+            # Missing or invalid IDs start a new conversation instead of failing the chat.
             conversation = Conversation(user_id=user.id)
             session.add(conversation)
             session.commit()
@@ -195,6 +204,7 @@ def load_messages_for_conversation(conversation_id: str) -> List[Dict[str, Any]]
     with SessionLocal() as session:
         try:
             conv_uuid = uuid.UUID(conversation_id)
+            # Oldest-first ordering lets Streamlit replay messages naturally.
             messages: List[Message] = (
                 session.query(Message)
                 .filter_by(conversation_id=conv_uuid)
